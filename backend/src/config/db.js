@@ -6,12 +6,37 @@ const connectDB = async () => {
   try {
     console.log('[Database] Connecting to MongoDB...');
     const conn = await mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/maintainiq', {
-      serverSelectionTimeoutMS: 8000 // 8s selection timeout limit
+      serverSelectionTimeoutMS: 5000 // 5s selection timeout limit
     });
     console.log(`[Database] MongoDB Connected: ${conn.connection.host}`);
+    
+    // Seed default database data if empty
+    const seedDatabase = require('./seed');
+    await seedDatabase();
   } catch (error) {
     console.error(`[Database Error] Connection failed: ${error.message}`);
-    console.warn('[Database Alert] Booting server without active connection. Mongoose will auto-reconnect once database node is accessible.');
+    console.log('[Database] Spinning up in-memory MongoDB fallback database...');
+    try {
+      const { MongoMemoryServer } = require('mongodb-memory-server');
+      const mongod = await MongoMemoryServer.create({
+        binary: {
+          version: '4.4.24'
+        }
+      });
+      const uri = mongod.getUri();
+      console.log(`[Database] In-memory MongoDB URI: ${uri}`);
+      
+      const conn = await mongoose.connect(uri);
+      console.log(`[Database] Connected to In-Memory MongoDB: ${conn.connection.host}`);
+      
+      // Seed default database data
+      const seedDatabase = require('./seed');
+      await seedDatabase();
+      
+    } catch (fallbackError) {
+      console.error(`[Database Error] In-memory MongoDB fallback failed: ${fallbackError.message}`);
+      console.warn('[Database Alert] Booting server without active connection. Mongoose will auto-reconnect once database node is accessible.');
+    }
   }
 };
 

@@ -86,7 +86,10 @@ const Register = () => {
           });
           setErrors(tempErrors);
         } else {
-          setErrors({ email: err.response?.data?.message || 'This email is already registered.' });
+          const defaultMsg = err.response 
+            ? (err.response.data?.message || 'This email is already registered.') 
+            : 'Could not connect to the server. Please ensure the backend is running.';
+          setErrors({ email: defaultMsg });
         }
       });
   };

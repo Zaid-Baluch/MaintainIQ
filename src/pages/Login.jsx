@@ -64,7 +64,10 @@ const Login = () => {
       })
       .catch(err => {
         setLoading(false);
-        setAuthError(err.response?.data?.message || 'Invalid email credentials or incorrect password. Try admin@maintainiq.com / password123.');
+        const defaultMsg = err.response
+          ? (err.response.data?.message || 'Invalid email credentials or incorrect password. Try admin@maintainiq.com / password123.')
+          : 'Could not connect to the server. Please ensure the backend is running.';
+        setAuthError(defaultMsg);
       });
   };
 
