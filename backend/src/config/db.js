@@ -15,6 +15,12 @@ const connectDB = async () => {
     await seedDatabase();
   } catch (error) {
     console.error(`[Database Error] Connection failed: ${error.message}`);
+    
+    // Skip fallback in Vercel serverless / Production environments to prevent function hang
+    if (process.env.VERCEL === '1' || process.env.NODE_ENV === 'production') {
+      throw error;
+    }
+    
     console.log('[Database] Spinning up in-memory MongoDB fallback database...');
     try {
       const { MongoMemoryServer } = require('mongodb-memory-server');
